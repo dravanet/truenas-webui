@@ -31,7 +31,6 @@ export class BootStatusListComponent implements OnInit {
   busy: Subscription;
   protected pk: number;
   poolScan: any;
-  oneDisk = false;
   expandRows: number[] = [1];
   treeTableConfig: EntityTreeTable = {
     tableData: [],
@@ -53,9 +52,6 @@ export class BootStatusListComponent implements OnInit {
   getData() {
     this.ws.call('boot.get_state').subscribe(
       (res) => {
-        if (res.groups.data[0].type === 'disk') {
-          this.oneDisk = true;
-        }
         if (res) {
           // this.poolScan = res.scan;
           this.dataHandler(res);
@@ -118,50 +114,34 @@ export class BootStatusListComponent implements OnInit {
       path: data.path,
     };
 
-    if (data.type && boot_pool_data && boot_pool_data.type === 'mirror' && data.path) {
+    if (data.type && boot_pool_data) {
       item.actions = [{
-        label: T('Detach'),
+        label: T('Attach'),
         onClick: (row) => {
-          this.detach(row.name);
-        },
-        isHidden: false,
-      },
-      {
-        label: T('Replace'),
-        onClick: (row) => {
-          this._router.navigate(new Array('').concat(['system', 'boot', 'replace', row.name]));
+          this._router.navigate(new Array('').concat(['system', 'boot', 'attach', row.name]));
         },
         isHidden: false,
       }];
-    }
 
-    if (data.type && boot_pool_data && boot_pool_data.type === 'disk' && data.path && !this.oneDisk) {
-      item.actions = [
-        {
+      if (data.path) {
+        item.actions.push({
           label: T('Replace'),
           onClick: (row) => {
             this._router.navigate(new Array('').concat(['system', 'boot', 'replace', row.name]));
           },
           isHidden: false,
-        }];
-    }
+        });
 
-    if (data.type && boot_pool_data && boot_pool_data.type === 'disk' && data.path && this.oneDisk) {
-      item.actions = [
-        {
-          label: T('Attach'),
-          onClick: (row) => {
-            this._router.navigate(new Array('').concat(['system', 'boot', 'attach', row.name]));
-          },
-          isHidden: false,
-        },
-        {
-          label: T('Replace'),
-          onClick: (row) => {
-            this._router.navigate(new Array('').concat(['system', 'boot', 'replace', row.name]));
-          },
-          isHidden: false,
-        }];
+        if (boot_pool_data.type === 'mirror') {
+          item.actions.push({
+            label: T('Detach'),
+            onClick: (row) => {
+              this.detach(row.name);
+            },
+            isHidden: false,
+          });
+        }
+      }
     }
 
     return item;
